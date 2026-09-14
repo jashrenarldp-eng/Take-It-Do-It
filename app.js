@@ -47,6 +47,7 @@ const archiveModal = document.getElementById("archiveModal");
 const archiveList = document.getElementById("archiveList");
 const taskSearchInput = document.getElementById("taskSearchInput");
 const subjectFilterSelect = document.getElementById("subjectFilterSelect");
+const sortFilterSelect = document.getElementbyId ("sortFilterSelect")
 
 /* ==========================================
    2. LOCAL STORAGE & UPDATE 8.5.1 AUTO-CLEANUP
@@ -64,6 +65,21 @@ function setPersonalTaskState(taskId, isCompleted) {
 
 function getArchivedTasks() {
   return JSON.parse(localStorage.getItem("takeitdoit_archived")) || [];
+}
+
+function getPinnedTasks () {
+  return JSON.parse (localstorage.getItem("user_pinned_tasks")) || [];
+}
+
+function togglePinTask (taskId) {
+  let pinner = getPinnedTasks();
+  if (pinned.includes(taskId)){
+    pinned = filter(id => id !== taskId); //unpin
+  }else{
+    pinned.push(taskId); //pin
+  }
+  localStorage.setItem("user_pinned_tasks" , JSON.stringify(pinned));
+  renderactiveTasks();
 }
 
 // UPDATE 8.5.1: Silently purge items archived more than 7 days ago
@@ -175,16 +191,24 @@ subjectFilterSelect?.addEventListener("change", renderActiveTasks);
 /* ==========================================
    5. TASK CARD RENDER & ADMIN CONTROLS 
    ========================================== */
+/* ==========================================
+   5. TASK CARD RENDER, SORTING & ADMIN CONTROLS 
+   ========================================== */
+sortFilterSelect?.addEventListener("change", renderActiveTasks);
+
 function renderActiveTasks() {
   if (!taskGrid) return;
   taskGrid.innerHTML = "";
 
   const archivedList = getArchivedTasks();
   const archivedIds = archivedList.map(item => item.id);
+  const pinnedIds = getPinnedTasks();
+  
   const query = taskSearchInput ? taskSearchInput.value.trim().toLowerCase() : "";
   const selectedSubject = subjectFilterSelect ? subjectFilterSelect.value.toLowerCase() : "all";
+  const sortBy = sortFilterSelect ? sortFilterSelect.value : "due-asc";
 
-  const activeIds = Array.from(cachedTaskMap.keys()).filter((id) => {
+  let activeIds = Array.from(cachedTaskMap.keys()).filter((id) => {
     if (archivedIds.includes(id)) return false;
 
     const task = cachedTaskMap.get(id) || {};
@@ -196,12 +220,40 @@ function renderActiveTasks() {
     if (selectedSubject !== "all" && subject !== selectedSubject) return false;
     if (query && !title.includes(query) && !body.includes(query)) return false;
     
-    // UPDATE 8.5.2: Hide Vault tasks from normal views
     if (currentTimeFilter !== "vault" && timeStatus === "vault") return false;
     if (currentTimeFilter === "vault" && timeStatus !== "vault") return false;
     if (currentTimeFilter !== "all" && currentTimeFilter !== "vault" && timeStatus !== currentTimeFilter) return false;
 
     return true;
+  });
+
+  // UPDATE 8.6: Dynamic Sorting Engine
+  activeIds.sort((a, b) => {
+    // 1. Pinned tasks ALWAYS go to the very top
+    const isAPinned = pinnedIds.includes(a);
+    const isBPinned = pinnedIds.includes(b);
+    if (isAPinned && !isBPinned) return -1;
+    if (!isAPinned && isBPinned) return 1;
+
+    const taskA = cachedTaskMap.get(a) || {};
+    const taskB = cachedTaskMap.get(b) || {};
+
+    // 2. Sort remaining based on dropdown selection
+    if (sortBy === "subject-asc") {
+      const subA = (taskA.subject || "z").toLowerCase();
+      const subB = (taskB.subject || "z").toLowerCase();
+      return subA.localeCompare(subB);
+    } 
+    else if (sortBy === "posted-desc") {
+      const dateA = new Date(taskA.createdAt || 0);
+      const dateB = new Date(taskB.createdAt || 0);
+      return dateB - dateA;
+    } 
+    else { // default: "due-asc" (Earliest Due Date first)
+      const dateA = taskA.dueDate ? new Date(taskA.dueDate).getTime() : Infinity;
+      const dateB = taskB.dueDate ? new Date(taskB.dueDate).getTime() : Infinity;
+      return dateA - dateB;
+    }
   });
 
   if (activeIds.length === 0) {
@@ -218,6 +270,7 @@ function renderActiveTasks() {
 function renderTaskCard(id, data) {
   if (!taskGrid) return;
   const isCompleted = getPersonalTaskState(id);
+  const isPinned = getPinnedTasks().includes(id);
   const subjectClass = data.subject ? `bg-${data.subject.toLowerCase().replace(/[^a-z0-9]/g, '')}` : 'bg-cmpe';
   
   const timeStatus = getDeadlineStatus(data.dueDate);
@@ -226,8 +279,9 @@ function renderTaskCard(id, data) {
   if (!isCompleted && (timeStatus === "today" || timeStatus === "overdue")) {
     stateClass = "urgent";
   } else if (timeStatus === "vault") {
-    stateClass = "vault"; // Apply vault styling
+    stateClass = "vault";
   }
+  if (isPinned) stateClass += " pinned"; // Add pinned CSS trigger
 
   let displayDate = data.dueDate ? `Due: ${data.dueDate}` : "No Deadline";
   if (timeStatus === "overdue") displayDate = `⚠️ OVERDUE: ${data.dueDate}`;
@@ -238,11 +292,13 @@ function renderTaskCard(id, data) {
   card.className = `card ${subjectClass} ${isCompleted ? 'completed' : ''} ${stateClass}`;
   card.setAttribute("data-id", id);
 
+  // UPDATE 8.6: Added Pin Button (📌)
   card.innerHTML = `
     <div>
       <div class="card-top">
         <div class="card-controls">
           <input type="checkbox" class="checkbox" ${isCompleted ? 'checked' : ''} />
+          <button class="btn-pin-icon" title="Pin to top">📌</button>
           <button class="btn-expand-icon" title="Expand task view">⤢</button>
           <button class="btn-archive-icon" title="Archive task">📦</button>
           <button class="btn-edit-icon admin-only" title="Edit task">✏️</button>
@@ -256,6 +312,7 @@ function renderTaskCard(id, data) {
     <div class="card-body">${data.body || ''}</div>
   `;
 
+  // Base Handlers
   const checkbox = card.querySelector(".checkbox");
   checkbox?.addEventListener("change", (e) => {
     e.stopPropagation();
@@ -269,6 +326,8 @@ function renderTaskCard(id, data) {
     }
   });
 
+  // Action Buttons
+  card.querySelector(".btn-pin-icon")?.addEventListener("click", (e) => { e.stopPropagation(); togglePinTask(id); });
   card.querySelector(".btn-archive-icon")?.addEventListener("click", (e) => { e.stopPropagation(); archiveTask(id); });
   card.querySelector(".btn-edit-icon")?.addEventListener("click", (e) => { e.stopPropagation(); openEditModal(id, data); });
   card.querySelector(".btn-delete-icon")?.addEventListener("click", (e) => { e.stopPropagation(); deleteTask(id); });

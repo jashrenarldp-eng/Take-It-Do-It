@@ -484,22 +484,51 @@ body.dark-mode .btn-time-filter.active {
   background-color: #991b1b !important; 
   border: 2px solid #ef4444;
 }
+    
 .card.urgent .due-date {
   color: #fca5a5 !important;
   font-weight: 900;
 }
+    
  .card.vault {
    background-color: #f1f5f9 !important;
    border: ipx dashed #cbd5e1;
    opacity: 8.08;
  }
+    
  body.dark-mode .card.vault {
       backgorund-color: #0f172a !important;
       border-color: #334155;
  }
+    
  .card.vault .due-date {
       color:#64748b !important;
  }
+    
+.btn-pin-icon {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-tems: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+    
+.btn-pin-icon: hover {background: rgba(255,255,255,0.35);}
+.card-pinned .btn-pin-icon {
+  background: rgba(234,179,8,0.9);
+  color: black;
+}
+    
+.card.pinned {
+  box-shadow: 0 0 8px rgba(234,179,8,0.5);
+  border-color: rgba(234,179,8,0.5);
+}
     
   </style>
 </head>
@@ -557,27 +586,33 @@ body.dark-mode .btn-time-filter.active {
     class="filter-input" 
     placeholder="🔍 Search tasks by title or content..." 
     style="flex: 1; min-width: 240px;" />
-        
-  <select id="subjectFilterSelect" class="filter-input" style="min-width: 180px; cursor: pointer;">
-    <option value="all">All Subjects</option>
-    <option value="chem">CHEM 015</option>
-    <option value="math101">MATH 101</option>
-    <option value="pathfit">PATHFIT 1</option>
-    <option value="inen">INEN 101</option>
-    <option value="geed004">GEED 004</option>
-    <option value="geed032">GEED 032</option>
-    <option value="cmpe">CMPE 011</option>
-    <option value="nstp">NSTP 1 - CWTS</option>
-  </select>
+
+    <select id="sortFilterSelect" class="filter-select">
+      <option value="due-asc"> Sort: Due Date (Earliest)</option>
+      <option value="posted-desc"> Sort: Newly Posted </option>
+      <option value="subject-asc"> Sort: Subject (A-Z) </option>
+    </select>
+  
+   <select id="subjectFilterSelect" class="filter-input" style="min-width: 180px; cursor: pointer;">
+      <option value="all">All Subjects</option>
+      <option value="chem">CHEM 015</option>
+      <option value="math101">MATH 101</option>
+      <option value="pathfit">PATHFIT 1</option>
+      <option value="inen">INEN 101</option>
+      <option value="geed004">GEED 004</option>
+      <option value="geed032">GEED 032</option>
+      <option value="cmpe">CMPE 011</option>
+      <option value="nstp">NSTP 1 - CWTS</option>
+   </select>
     
     <div class="time-filters" id="timeFilterContainer">
-    <button class="btn-time-filter active" data-time="all">All Time</button>
-    <button class="btn-time-filter" data-time="today">Today</button>
-    <button class="btn-time-filter" data-time="tomorrow">Tomorrow</button>
-    <button class="btn-time-filter" data-time="overdue">Overdue</button>
-    <button class="btn-time-filter" data-time="none">No Deadline</button>
+      <button class="btn-time-filter active" data-time="all">All Time</button>
+      <button class="btn-time-filter" data-time="today">Today</button>
+      <button class="btn-time-filter" data-time="tomorrow">Tomorrow</button>
+      <button class="btn-time-filter" data-time="overdue">Overdue</button>
+      <button class="btn-time-filter" data-time="none">No Deadline</button>
     <!--Update 8.5.2: Overdue Vault-->
-    <button class="btn-time-filter" date-time="vault">Deep Vault</button>
+      <button class="btn-time-filter" date-time="vault">Deep Vault</button>
     </div>
 </div>
 

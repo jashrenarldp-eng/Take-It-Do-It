@@ -47,10 +47,10 @@ const archiveModal = document.getElementById("archiveModal");
 const archiveList = document.getElementById("archiveList");
 const taskSearchInput = document.getElementById("taskSearchInput");
 const subjectFilterSelect = document.getElementById("subjectFilterSelect");
-const sortFilterSelect = document.getElementbyId ("sortFilterSelect")
+const sortFilterSelect = document.getElementById("sortFilterSelect");
 
 /* ==========================================
-   2. LOCAL STORAGE & UPDATE 8.5.1 AUTO-CLEANUP
+   2. LOCAL STORAGE & AUTO-CLEANUP
    ========================================== */
 function getPersonalTaskState(taskId) {
   const localData = JSON.parse(localStorage.getItem("user_task_progress")) || {};
@@ -67,19 +67,20 @@ function getArchivedTasks() {
   return JSON.parse(localStorage.getItem("takeitdoit_archived")) || [];
 }
 
-function getPinnedTasks () {
-  return JSON.parse (localstorage.getItem("user_pinned_tasks")) || [];
+/* UPDATE 8.6.1: Local Pinning System */
+function getPinnedTasks() {
+  return JSON.parse(localStorage.getItem("user_pinned_tasks")) || [];
 }
 
-function togglePinTask (taskId) {
-  let pinner = getPinnedTasks();
-  if (pinned.includes(taskId)){
-    pinned = filter(id => id !== taskId); //unpin
-  }else{
-    pinned.push(taskId); //pin
+function togglePinTask(taskId) {
+  let pinned = getPinnedTasks();
+  if (pinned.includes(taskId)) {
+    pinned = pinned.filter(id => id !== taskId); // unpin
+  } else {
+    pinned.push(taskId); // pin
   }
-  localStorage.setItem("user_pinned_tasks" , JSON.stringify(pinned));
-  renderactiveTasks();
+  localStorage.setItem("user_pinned_tasks", JSON.stringify(pinned));
+  renderActiveTasks();
 }
 
 // UPDATE 8.5.1: Silently purge items archived more than 7 days ago
@@ -189,9 +190,6 @@ taskSearchInput?.addEventListener("input", renderActiveTasks);
 subjectFilterSelect?.addEventListener("change", renderActiveTasks);
 
 /* ==========================================
-   5. TASK CARD RENDER & ADMIN CONTROLS 
-   ========================================== */
-/* ==========================================
    5. TASK CARD RENDER, SORTING & ADMIN CONTROLS 
    ========================================== */
 sortFilterSelect?.addEventListener("change", renderActiveTasks);
@@ -292,7 +290,6 @@ function renderTaskCard(id, data) {
   card.className = `card ${subjectClass} ${isCompleted ? 'completed' : ''} ${stateClass}`;
   card.setAttribute("data-id", id);
 
-  // UPDATE 8.6: Added Pin Button (📌)
   card.innerHTML = `
     <div>
       <div class="card-top">
@@ -312,7 +309,6 @@ function renderTaskCard(id, data) {
     <div class="card-body">${data.body || ''}</div>
   `;
 
-  // Base Handlers
   const checkbox = card.querySelector(".checkbox");
   checkbox?.addEventListener("change", (e) => {
     e.stopPropagation();
@@ -326,7 +322,6 @@ function renderTaskCard(id, data) {
     }
   });
 
-  // Action Buttons
   card.querySelector(".btn-pin-icon")?.addEventListener("click", (e) => { e.stopPropagation(); togglePinTask(id); });
   card.querySelector(".btn-archive-icon")?.addEventListener("click", (e) => { e.stopPropagation(); archiveTask(id); });
   card.querySelector(".btn-edit-icon")?.addEventListener("click", (e) => { e.stopPropagation(); openEditModal(id, data); });

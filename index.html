@@ -578,7 +578,34 @@ body.dark-mode .sub-task-item { color: #cbd5e1; }
   background: #ef4444; color: white; border: none; border-radius: 6px; 
   padding: 0 12px; cursor: pointer; font-weight: bold;
 }
-    
+
+/* Fix 1: Constrain the Task Cards */
+.card {
+  max-height: 400px; /* Prevents giant masonry blocks */
+  display: flex;
+  flex-direction: column;
+}
+.card-body {
+  flex-grow: 1;
+  overflow-y: auto; /* Adds a scrollbar only to the text if it's too long */
+}
+.sub-task-list {
+  max-height: 140px;
+  overflow-y: auto; /* Adds a scrollbar if there are too many checkboxes */
+  padding-right: 5px; 
+}
+
+/* Fix 2: Constrain the Admin & Edit Forms */
+#adminTaskForm, #editTaskForm {
+  max-height: 65vh; /* Prevents the form from pushing off the screen */
+  overflow-y: auto;
+  padding-right: 10px;
+}
+#adminSubTaskList, #editSubTaskList {
+  max-height: 150px;
+  overflow-y: auto;
+}
+
   </style>
 </head>
 
@@ -682,6 +709,8 @@ body.dark-mode .sub-task-item { color: #cbd5e1; }
       <h2 id="expTitle" style="font-family: 'Georgia', serif; font-size: 1.8rem; margin: 0 0 12px 0;">Task Title</h2>
       <div id="expDueDate" class="due-date" style="font-size: 1rem; margin-bottom: 16px;">Due Date</div>
       <div id="expBody" style="font-size: 1.05rem; line-height: 1.6; opacity: 0.95;">Task details...</div>
+      <div id="expProgress" style="margin-top: 15px;"></div>
+      <div id="expSubTasks" style="margin-top: 10px;"></div>
     </div>
   </div>
 

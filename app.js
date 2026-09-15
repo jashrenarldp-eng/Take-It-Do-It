@@ -314,14 +314,43 @@ function renderTaskCard(id, data) {
   card.querySelector(".btn-archive-icon")?.addEventListener("click", (e) => { e.stopPropagation(); archiveTask(id); });
   card.querySelector(".btn-edit-icon")?.addEventListener("click", (e) => { e.stopPropagation(); openEditModal(id, data); });
   card.querySelector(".btn-delete-icon")?.addEventListener("click", (e) => { e.stopPropagation(); deleteTask(id); });
+  
+  // === THIS IS THE UPDATED STEP 3 SECTION ===
   card.querySelector(".btn-expand-icon")?.addEventListener("click", (e) => {
     e.stopPropagation();
     document.getElementById("expBadge").textContent = (data.subject || 'GENERAL').toUpperCase();
     document.getElementById("expTitle").textContent = data.title || 'Untitled Task';
     document.getElementById("expDueDate").textContent = displayDate;
     document.getElementById("expBody").innerHTML = data.body || '';
+    
+    // Inject Sub-Tasks into the Expand Modal
+    const expProgress = document.getElementById("expProgress");
+    const expSubTasks = document.getElementById("expSubTasks");
+    
+    if (expProgress) expProgress.innerHTML = progressHTML;
+    if (expSubTasks) {
+      expSubTasks.innerHTML = subTasksHTML;
+      
+      // Make the checkboxes in the maximized view interactive
+      expSubTasks.querySelectorAll(".subtask-checkbox").forEach(chk => {
+        chk.addEventListener("change", (e) => {
+          e.stopPropagation();
+          const idx = chk.getAttribute("data-idx");
+          let localSub = JSON.parse(localStorage.getItem("user_subtask_progress")) || {};
+          if (!localSub[id]) localSub[id] = {};
+          localSub[id][idx] = chk.checked;
+          localStorage.setItem("user_subtask_progress", JSON.stringify(localSub));
+          
+          // Re-render the background board to keep everything in sync
+          renderActiveTasks(); 
+        });
+      });
+    }
+    
     expandModal?.classList.add("active");
   });
+  // === END UPDATED STEP 3 SECTION ===
+
   card.addEventListener("click", (e) => {
     if (e.target.tagName === "A" || e.target.tagName === "BUTTON" || e.target.classList.contains("checkbox") || e.target.classList.contains("subtask-checkbox")) return;
     checkbox.click(); 

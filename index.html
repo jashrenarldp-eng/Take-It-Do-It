@@ -529,6 +529,55 @@ body.dark-mode .btn-time-filter.active {
   box-shadow: 0 0 8px rgba(234,179,8,0.5);
   border-color: rgba(234,179,8,0.5);
 }
+
+.progress-wrapper {
+  width: 100%;
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 999px;
+  margin-top: 12px;
+  overflow: hidden;
+}
+body.dark-mode .progress-wrapper { background: #334155; }
+
+.progress-fill {
+  height: 100%;
+  background: #3b82f6; 
+  transition: width 0.3s ease, background 0.3s ease;
+}
+.card.completed .progress-fill {
+  background: #10b981 !important; 
+}
+
+.sub-task-list {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px dashed rgba(0,0,0,0.1);
+  padding-top: 12px;
+}
+body.dark-mode .sub-task-list { border-top-color: rgba(255,255,255,0.1); }
+
+.sub-task-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: #475569;
+  cursor: pointer;
+}
+body.dark-mode .sub-task-item { color: #cbd5e1; }
+.sub-task-item.done {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+
+.sub-task-input-group { display: flex; gap: 8px; margin-bottom: 8px; }
+.btn-remove-subtask { 
+  background: #ef4444; color: white; border: none; border-radius: 6px; 
+  padding: 0 12px; cursor: pointer; font-weight: bold;
+}
     
   </style>
 </head>
@@ -695,6 +744,11 @@ body.dark-mode .btn-time-filter.active {
 
           <input type="date" id="adminTaskDueDate" class="admin-input" placeholder="Due Date (e.g. Due Sep 15, 2026)" />
           <textarea id="adminTaskBody" class="admin-input" placeholder="Task details and instructions..." rows="3" required style="font-family: inherit;"></textarea>
+         <div class="form-group" style="margin-top: 15px; margin-bottom: 15px;">
+           <label>style="display: block; font-size: 0.8rem; font-weight 700; color: #64748b; margin-bottom: 8px; Sub-Tasks (Optional) </label> 
+           <div id="adminSubTaskList"></div> 
+           <button type="button" id="btnAddAdminSubTask" class="btn-time-filter" style="width: 100%; border: 1px dashed #cdb5ei;">+ Add Sub-Task</button>
+         </div> 
           <button type="submit" class="btn-pill btn-light-green" style="justify-content: center; padding: 12px; font-size: 0.9rem;">
             Publish Task to Class
           </button>
@@ -738,7 +792,11 @@ body.dark-mode .btn-time-filter.active {
 
       <input type="date" id="editTaskDueDate" class="admin-input" placeholder="Due Date" />
       <textarea id="editTaskBody" class="admin-input" placeholder="Task details..." rows="3" required style="font-family: inherit;"></textarea>
-      
+       <div class="form-group" style="margin-top: 15px; margin-bottom: 15px;">
+           <label>style="display: block; font-size: 0.8rem; font-weight 700; color: #64748b; margin-bottom: 8px; Sub-Tasks (Optional) </label> 
+           <div id="adminSubTaskList"></div> 
+           <button type="button" id="btnAddAdminSubTask" class="btn-time-filter" style="width: 100%; border: 1px dashed #cdb5ei;">+ Add Sub-Task</button>
+         </div> 
       <button type="submit" class="btn-pill btn-light-green" style="justify-content: center; padding: 12px; font-size: 0.9rem;">
         Save Changes
       </button>

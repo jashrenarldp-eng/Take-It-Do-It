@@ -606,6 +606,26 @@ body.dark-mode .sub-task-item { color: #cbd5e1; }
   overflow-y: auto;
 }
 
+/* Update 8.7: Mobile Viewport Fixes for the Expand Modal */
+#expandModal > div {
+  max-height: 85vh; /* Prevents the modal box from exceeding the phone screen */
+  display: flex;
+  flex-direction: column;
+}
+
+#expBody {
+  max-height: 35vh; /* Limits the description height */
+  overflow-y: auto; /* Adds a scrollbar specifically to the description */
+  padding-right: 8px;
+}
+
+#expSubTasks {
+  max-height: 25vh; /* Limits the sub-task list height */
+  overflow-y: auto; /* Adds a scrollbar specifically to the sub-tasks */
+  padding-right: 8px;
+  margin-bottom: 10px;
+}
+
   </style>
 </head>
 

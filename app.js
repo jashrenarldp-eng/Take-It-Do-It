@@ -421,6 +421,30 @@ document.getElementById("btnNotifPermission")?.addEventListener("click", async (
 /* ==========================================
    7. FIRESTORE REAL-TIME LISTENER
    ========================================== */
+onSnapshot(collection(db, "subjects"), (snapshot) => {
+  const filterSelect = document.getElementById("subjectFilterSelect");
+  const adminSelect = document.getElementById("adminTaskSubject");
+  const editSelect = document.getElementById("editTaskSubject");
+  
+  // Extract and sort subjects alphabetically
+  const subjects = snapshot.docs.map(doc => doc.data().name).sort();
+  
+  // Build the HTML strings
+  let filterHTML = '<option value="all">📚 All Subjects</option>';
+  let formHTML = '';
+  
+  subjects.forEach(sub => {
+    filterHTML += `<option value="${sub.toLowerCase()}">${sub}</option>`;
+    formHTML += `<option value="${sub.toLowerCase()}">${sub}</option>`;
+  });
+  
+  // Inject into DOM
+  if (filterSelect) filterSelect.innerHTML = filterHTML;
+  if (adminSelect) adminSelect.innerHTML = formHTML;
+  if (editSelect) editSelect.innerHTML = formHTML;
+  
+  renderActiveTasks(); // Re-render the board in case the active filter changed
+}, (error) => console.error("Subject Firestore Error: ", error));
 let isInitialLoad = true;
 onSnapshot(collection(db, "tasks"), (snapshot) => {
   if (!taskGrid) return;

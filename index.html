@@ -689,16 +689,8 @@ body.dark-mode .sub-task-item { color: #cbd5e1; }
       <option value="subject-asc"> Sort: Subject (A-Z) </option>
     </select>
   
-   <select id="subjectFilterSelect" class="filter-input" style="min-width: 180px; cursor: pointer;">
-      <option value="all">All Subjects</option>
-      <option value="chem">CHEM 015</option>
-      <option value="math101">MATH 101</option>
-      <option value="pathfit">PATHFIT 1</option>
-      <option value="inen">INEN 101</option>
-      <option value="geed004">GEED 004</option>
-      <option value="geed032">GEED 032</option>
-      <option value="cmpe">CMPE 011</option>
-      <option value="nstp">NSTP 1 - CWTS</option>
+    <select id="subjectFilterSelect" class="filter-select">
+       <option value="all">📚 All Subjects</option>
    </select>
     
     <div class="time-filters" id="timeFilterContainer">
@@ -778,18 +770,18 @@ body.dark-mode .sub-task-item { color: #cbd5e1; }
         <h2 style="font-family: 'Georgia', serif; margin-top: 0; font-size: 1.5rem;">➕ Publish New Task</h2>
         <p style="font-size: 0.8rem; opacity: 0.8; margin-bottom: 16px;">New tasks will instantly sync to all students' screens.</p>
         <form id="adminTaskForm" style="display: flex; flex-direction: column; gap: 12px;">
+          <!-- UPDATE 8.8: Dynamic Subject Creator -->
+          <div style="background: rgba(0,0,0,0.05); padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #475569; margin-bottom: 8px;">+ Add New Subject to Database</label>
+             <div style="display: flex; gap: 8px;">
+               <input type="text" id="newSubjectInput" class="admin-input" placeholder="e.g., BSIE 101" style="margin-bottom: 0;">
+               <button type="button" id="btnAddSubject" class="btn-time-filter" style="white-space: nowrap; border-color: #cbd5e1;">Add Subject</button>
+             </div>
+          </div>
+          <hr style="border: 0; border-top: 1px solid #e2e8f0; margin-bottom: 15px;">
           <input type="text" id="adminTaskTitle" class="admin-input" placeholder="Task Title" required />
 
-          <select id="adminTaskSubject" class="admin-input" required>
-            <option value="chem">CHEM 015</option>
-            <option value="math101">MATH 101</option>
-            <option value="pathfit">PATHFIT 1</option>
-            <option value="inen">INEN 101</option>
-            <option value="geed004">GEED 004</option>
-            <option value="geed032">GEED 032</option>
-            <option value="cmpe">CMPE 011</option>
-            <option value="nstp">NSTP 1 - CWTS</option>
-          </select>
+          <select id="adminTaskSubject" class="admin-input"> </select>
 
           <input type="date" id="adminTaskDueDate" class="admin-input" placeholder="Due Date (e.g. Due Sep 15, 2026)" />
           <textarea id="adminTaskBody" class="admin-input" placeholder="Task details and instructions..." rows="3" required style="font-family: inherit;"></textarea>
@@ -828,16 +820,7 @@ body.dark-mode .sub-task-item { color: #cbd5e1; }
       <input type="hidden" id="editTaskId" />
       <input type="text" id="editTaskTitle" class="admin-input" placeholder="Task Title" required />
 
-      <select id="editTaskSubject" class="admin-input" required>
-        <option value="chem">CHEM 015</option>
-        <option value="math101">MATH 101</option>
-        <option value="pathfit">PATHFIT 1</option>
-        <option value="inen">INEN 101</option>
-        <option value="geed004">GEED 004</option>
-        <option value="geed032">GEED 032</option>
-        <option value="cmpe">CMPE 011</option>
-        <option value="nstp">NSTP 1 - CWTS</option>
-      </select>
+      <select id="editTaskSubject" class="admin-input"> </select>
 
       <input type="date" id="editTaskDueDate" class="admin-input" placeholder="Due Date" />
       <textarea id="editTaskBody" class="admin-input" placeholder="Task details..." rows="3" required style="font-family: inherit;"></textarea>

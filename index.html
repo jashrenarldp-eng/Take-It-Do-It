@@ -742,33 +742,39 @@ body.dark-mode .color-swatch.selected { border-color: white; box-shadow: 0 0 0 2
   </div>
 
  <!-- Admin / Officer Modal -->
-<div id="adminModal" class="modal">
-  <div class="modal-content">
-    <button type="button" id="btnCloseAdmin" class="btn-close">×</button>
+<!-- Admin / Officer Modal -->
+<div id="adminModal" class="modal-overlay">
+  <div class="glass-card-modal" style="max-width: 600px;">
+    <button type="button" id="btnCloseAdmin" class="modal-close-btn">&times;</button>
     
     <!-- === SECURITY WRAPPER 1: THE LOGIN SCREEN === -->
     <div id="adminAuthStep">
-      <h2>🔒 Officer Verification</h2>
-      <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 15px;">Enter your officer credentials to access the task publisher.</p>
-      <input type="email" id="adminEmail" class="admin-input" placeholder="Enter valid Email" />
-      <input type="password" id="adminPasscode" class="admin-input" placeholder="Enter password..." />
+      <h2 style="font-family: 'Georgia', serif; margin-top: 0; font-size: 1.6rem;">🔒 Officer Verification</h2>
+      <p style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 15px;">Enter your officer credentials to access the task publisher.</p>
+      
+      <input type="email" id="adminEmail" class="admin-input" placeholder="Enter valid Email" style="margin-bottom: 10px;" />
+      <input type="password" id="adminPasscode" class="admin-input" placeholder="Enter password..." style="margin-bottom: 10px;" />
       <p id="passcodeError" style="color: #ef4444; font-size: 0.8rem; display: none; margin-bottom: 10px;">Access denied.</p>
-      <button type="button" id="btnVerifyPasscode" class="btn-primary" style="width: 100%;">Unlock Task Maker</button>
+      
+      <button type="button" id="btnVerifyPasscode" class="btn-pill btn-light-green" style="width: 100%; justify-content: center; padding: 12px; font-size: 0.9rem;">
+        Unlock Task Maker
+      </button>
     </div>
 
     <!-- === SECURITY WRAPPER 2: THE TASK MAKER (HIDDEN BY DEFAULT) === -->
     <div id="adminFormStep" style="display: none;">
-      <h2>➕ Publish New Task</h2>
+      <h2 style="font-family: 'Georgia', serif; margin-top: 0; font-size: 1.6rem;">➕ Publish New Task</h2>
       
       <form id="adminTaskForm">
         <!-- Dynamic Subject Creator -->
-        <div style="background: rgba(0,0,0,0.05); padding: 12px; border-radius: 8px; margin-bottom: 15px;">
-          <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #475569; margin-bottom: 8px;">+ Add New Subject</label>
+        <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1);">
+          <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #cbd5e1; margin-bottom: 8px;">+ Add New Subject</label>
           <div style="display: flex; gap: 8px; margin-bottom: 10px;">
             <input type="text" id="newSubjectInput" class="admin-input" placeholder="e.g., BSIE 101" style="margin-bottom: 0;">
-            <button type="button" id="btnAddSubject" class="btn-time-filter" style="white-space: nowrap; border-color: #cbd5e1;">Create</button>
+            <button type="button" id="btnAddSubject" class="btn-pill btn-light-green" style="white-space: nowrap; border-radius: 8px;">Create</button>
           </div>
-          <label style="display: block; font-size: 0.7rem; font-weight: 700; color: #64748b; margin-bottom: 6px;">SELECT THEME COLOR (Basic):</label>
+          
+          <label style="display: block; font-size: 0.7rem; font-weight: 700; color: #94a3b8; margin-bottom: 6px;">SELECT THEME COLOR (Basic):</label>
           <div id="subjectColorPalette" class="color-palette">
             <div class="color-swatch selected" data-color="#2563eb" style="background: #2563eb;" title="Blue"></div>
             <div class="color-swatch" data-color="#dc2626" style="background: #dc2626;" title="Red"></div>
@@ -783,27 +789,26 @@ body.dark-mode .color-swatch.selected { border-color: white; box-shadow: 0 0 0 2
             <div class="color-swatch" data-color="#475569" style="background: #475569;" title="Slate"></div>
             <div class="color-swatch" data-color="#52525b" style="background: #52525b;" title="Zinc"></div>
           </div>
-          <div style="font-size: 0.65rem; color: #94a3b8; margin-top: 6px; text-align: right;">💎 Custom Hex Shades coming in Premium</div>
+          <div style="font-size: 0.65rem; color: #64748b; margin-top: 6px; text-align: right;">💎 Custom Hex Shades coming in Premium</div>
         </div>
-        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin-bottom: 15px;">
 
         <!-- Main Task Inputs -->
-        <input type="text" id="adminTaskTitle" class="admin-input" placeholder="Task Title" required />
-        <select id="adminTaskSubject" class="admin-input"></select>
-        <input type="date" id="adminTaskDueDate" class="admin-input" />
+        <input type="text" id="adminTaskTitle" class="admin-input" placeholder="Task Title" style="margin-bottom: 10px;" required />
+        <select id="adminTaskSubject" class="admin-input" style="margin-bottom: 10px;"></select>
+        <input type="date" id="adminTaskDueDate" class="admin-input" style="margin-bottom: 10px;" />
         <textarea id="adminTaskBody" class="admin-input" placeholder="Task details and instructions..." rows="3" required style="font-family: inherit;"></textarea>
         
         <!-- Sub-Tasks -->
         <div class="form-group" style="margin-top: 15px; margin-bottom: 15px;">
-          <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #64748b; margin-bottom: 8px;">Sub-Tasks (Optional)</label>
+          <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #cbd5e1; margin-bottom: 8px;">Sub-Tasks (Optional)</label>
           <div id="adminSubTaskList"></div>
-          <button type="button" id="btnAddAdminSubTask" class="btn-time-filter" style="width: 100%; border: 1px dashed #cbd5e1;">+ Add Sub-Task</button>
+          <button type="button" id="btnAddAdminSubTask" class="btn-time-filter" style="width: 100%; border: 1px dashed #cbd5e1; margin-top: 5px;">+ Add Sub-Task</button>
         </div>
         
-        <button type="submit" class="btn-primary" style="width: 100%;">Publish Task to Class</button>
+        <button type="submit" class="btn-pill btn-light-green" style="width: 100%; justify-content: center; padding: 12px; font-size: 0.9rem;">Publish Task to Class</button>
       </form>
       
-      <button type="button" id="btnLogoutOfficer" class="btn-time-filter" style="width: 100%; margin-top: 10px; border-color: #ef4444; color: #ef4444;">Logout Officer</button>
+      <button type="button" id="btnLogoutOfficer" class="btn-pill btn-offline" style="width: 100%; margin-top: 10px; justify-content: center; padding: 12px; font-size: 0.9rem;">Logout Officer</button>
     </div>
   </div>
 </div>

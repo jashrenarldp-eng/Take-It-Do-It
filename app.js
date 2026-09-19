@@ -266,11 +266,10 @@ function renderTaskCard(id, data) {
   }
   
   const card = document.createElement("div");
-  // Remove the old hardcoded CSS classes and use the dynamic inline styles
   card.className = `card ${isCompleted ? 'completed' : ''} ${stateClass}`;
   card.setAttribute("data-id", id);
   card.style.backgroundColor = cardColor;
-  card.style.color = "#ffffff"; // Force text to be white against vibrant backgrounds
+  card.style.color = "#ffffff"; 
   
   card.innerHTML = `
     <div>
@@ -580,6 +579,12 @@ document.getElementById("adminTaskForm")?.addEventListener("submit", async (e) =
 });
 
 function openEditModal(taskId, data) {
+  // EMERGENCY LOCK: Prevent unauthorized users from opening the modal
+  if (!isOfficerAuthenticated) {
+    alert("Security Alert: You must be logged in as an Officer to edit tasks.");
+    return;
+  }
+
   if (document.getElementById("editTaskId")) document.getElementById("editTaskId").value = taskId;
   if (document.getElementById("editTaskTitle")) document.getElementById("editTaskTitle").value = data.title || "";
   if (document.getElementById("editTaskSubject")) document.getElementById("editTaskSubject").value = (data.subject || "chem").toLowerCase();
@@ -617,6 +622,12 @@ document.getElementById("editTaskForm")?.addEventListener("submit", async (e) =>
 });
 
 async function deleteTask(taskId) {
+  // EMERGENCY LOCK: Prevent unauthorized users from deleting tasks
+  if (!isOfficerAuthenticated) {
+    alert("Security Alert: You must be logged in as an Officer to delete tasks.");
+    return;
+  }
+
   if (!confirm("Are you sure you want to permanently delete this task for all students?")) return;
   try { await deleteDoc(doc(db, "tasks", taskId)); alert("Task permanently deleted."); } 
   catch (err) { alert("Error deleting task: " + err.message); }

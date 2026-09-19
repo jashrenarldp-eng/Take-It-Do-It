@@ -24,6 +24,7 @@ const auth = getAuth(app);
 
 const ALLOWED_OFFICER_EMAIL = "officer@class.com";
 let cachedTaskMap = new Map();
+let subjectColorMap = new Map(); // UPDATE 8.8: Global Color Dictionary
 let isOfficerAuthenticated = false;
 
 setPersistence(auth, inMemoryPersistence).catch(err => console.warn(err));
@@ -136,9 +137,9 @@ document.getElementById("btnCloseArchive")?.addEventListener("click", () => arch
    ========================================== */
 let currentTimeFilter = "all";
 document.querySelectorAll(".btn-time-filter").forEach(btn => {
-  if(btn.id.includes("SubTask")) return; // skip subtask buttons
+  if(btn.id.includes("SubTask") || btn.id === "btnAddSubject") return; 
   btn.addEventListener("click", (e) => {
-    document.querySelectorAll(".btn-time-filter:not(#btnAddAdminSubTask):not(#btnAddEditSubTask)").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".btn-time-filter:not(#btnAddAdminSubTask):not(#btnAddEditSubTask):not(#btnAddSubject)").forEach(b => b.classList.remove("active"));
     e.target.classList.add("active");
     currentTimeFilter = e.target.getAttribute("data-time");
     renderActiveTasks();
@@ -218,7 +219,10 @@ function renderTaskCard(id, data) {
   if (!taskGrid) return;
   const isCompleted = getPersonalTaskState(id);
   const isPinned = getPinnedTasks().includes(id);
-  const subjectClass = data.subject ? `bg-${data.subject.toLowerCase().replace(/[^a-z0-9]/g, '')}` : 'bg-cmpe';
+  
+  // UPDATE 8.8: Grab Custom Subject Color
+  const subjectKey = (data.subject || "").toLowerCase();
+  const cardColor = subjectColorMap.get(subjectKey) || "#475569"; // Default slate if not found
   
   const timeStatus = getDeadlineStatus(data.dueDate);
   let stateClass = "";
@@ -231,7 +235,6 @@ function renderTaskCard(id, data) {
   if (timeStatus === "today") displayDate = `🔥 DUE TODAY: ${data.dueDate}`;
   if (timeStatus === "vault") displayDate = `🗄️ DEEP VAULT: ${data.dueDate}`;
 
-  // UPDATE 8.7: Calculate Progress Bar & Render Subtasks
   let progressHTML = "";
   let subTasksHTML = "";
   const subTasks = data.subTasks || [];
@@ -263,8 +266,12 @@ function renderTaskCard(id, data) {
   }
   
   const card = document.createElement("div");
-  card.className = `card ${subjectClass} ${isCompleted ? 'completed' : ''} ${stateClass}`;
+  // Remove the old hardcoded CSS classes and use the dynamic inline styles
+  card.className = `card ${isCompleted ? 'completed' : ''} ${stateClass}`;
   card.setAttribute("data-id", id);
+  card.style.backgroundColor = cardColor;
+  card.style.color = "#ffffff"; // Force text to be white against vibrant backgrounds
+  
   card.innerHTML = `
     <div>
       <div class="card-top">
@@ -276,17 +283,16 @@ function renderTaskCard(id, data) {
           <button class="btn-edit-icon admin-only" title="Edit task">✏️</button>
           <button class="btn-delete-icon admin-only" title="Delete task">🗑️</button>
         </div>
-        <span class="badge">${(data.subject || 'GENERAL').toUpperCase()}</span>
+        <span class="badge" style="background: rgba(0,0,0,0.3); color: white;">${(data.subject || 'GENERAL').toUpperCase()}</span>
       </div>
       <h3 class="card-title">${data.title || 'Untitled Task'}</h3>
       <div class="due-date">${displayDate}</div>
     </div>
     ${progressHTML}
-    <div class="card-body">${data.body || ''}</div>
+    <div class="card-body" style="color: rgba(255,255,255,0.9);">${data.body || ''}</div>
     ${subTasksHTML}
   `;
 
-  // Main Task Completion
   const checkbox = card.querySelector(".checkbox");
   checkbox?.addEventListener("change", (e) => {
     e.stopPropagation();
@@ -296,7 +302,6 @@ function renderTaskCard(id, data) {
     else if (timeStatus === "today" || timeStatus === "overdue") card.classList.add("urgent");
   });
 
-  // Sub-Task Checkbox Logic (Update 8.7)
   card.querySelectorAll(".subtask-checkbox").forEach(chk => {
     chk.addEventListener("change", (e) => {
       e.stopPropagation();
@@ -305,11 +310,10 @@ function renderTaskCard(id, data) {
       if (!localSub[id]) localSub[id] = {};
       localSub[id][idx] = chk.checked;
       localStorage.setItem("user_subtask_progress", JSON.stringify(localSub));
-      renderActiveTasks(); // Re-render to update the visual progress bar immediately
+      renderActiveTasks(); 
     });
   });
 
-  // Button Listeners
   card.querySelector(".btn-pin-icon")?.addEventListener("click", (e) => { e.stopPropagation(); togglePinTask(id); });
   card.querySelector(".btn-archive-icon")?.addEventListener("click", (e) => { e.stopPropagation(); archiveTask(id); });
   card.querySelector(".btn-edit-icon")?.addEventListener("click", (e) => { e.stopPropagation(); openEditModal(id, data); });
@@ -322,15 +326,11 @@ function renderTaskCard(id, data) {
     document.getElementById("expDueDate").textContent = displayDate;
     document.getElementById("expBody").innerHTML = data.body || '';
     
-    // Inject Sub-Tasks into the Expand Modal
     const expProgress = document.getElementById("expProgress");
     const expSubTasks = document.getElementById("expSubTasks");
-    
     if (expProgress) expProgress.innerHTML = progressHTML;
     if (expSubTasks) {
       expSubTasks.innerHTML = subTasksHTML;
-      
-      // Make the checkboxes in the maximized view interactive
       expSubTasks.querySelectorAll(".subtask-checkbox").forEach(chk => {
         chk.addEventListener("change", (e) => {
           e.stopPropagation();
@@ -339,13 +339,10 @@ function renderTaskCard(id, data) {
           if (!localSub[id]) localSub[id] = {};
           localSub[id][idx] = chk.checked;
           localStorage.setItem("user_subtask_progress", JSON.stringify(localSub));
-          
-          // Re-render the background board to keep everything in sync
           renderActiveTasks(); 
         });
       });
     }
-    
     expandModal?.classList.add("active");
   });
 
@@ -419,34 +416,34 @@ document.getElementById("btnNotifPermission")?.addEventListener("click", async (
 /* ==========================================
    7. FIRESTORE REAL-TIME LISTENER
    ========================================== */
-
-// UPDATE 8.8: DYNAMIC SUBJECT ENGINE
 onSnapshot(collection(db, "subjects"), (snapshot) => {
   const filterSelect = document.getElementById("subjectFilterSelect");
   const adminSelect = document.getElementById("adminTaskSubject");
   const editSelect = document.getElementById("editTaskSubject");
   
-  // 1. Save the currently selected options safely
   const currentFilter = filterSelect ? filterSelect.value : "all";
   const currentAdmin = adminSelect ? adminSelect.value : "";
   const currentEdit = editSelect ? editSelect.value : "";
   
-  // 2. Extract and sort unique subjects safely
-  const subjects = snapshot.docs
-    .map(doc => doc.data().name || "")
-    .filter(name => name.trim() !== "")
-    .sort();
+  // UPDATE 8.8: Extract both name and color, then populate Global Dictionary
+  const subjectsList = snapshot.docs.map(doc => {
+    const d = doc.data();
+    return { name: d.name || "", color: d.color || "#475569" };
+  }).filter(s => s.name.trim() !== "");
   
+  subjectsList.sort((a, b) => a.name.localeCompare(b.name));
+  
+  subjectColorMap.clear();
   let filterHTML = '<option value="all">📚 All Subjects</option>';
   let formHTML = '';
   
-  subjects.forEach(sub => {
-    const subVal = sub.toLowerCase();
-    filterHTML += `<option value="${subVal}">${sub}</option>`;
-    formHTML += `<option value="${subVal}">${sub}</option>`;
+  subjectsList.forEach(s => {
+    const subVal = s.name.toLowerCase();
+    subjectColorMap.set(subVal, s.color);
+    filterHTML += `<option value="${subVal}">${s.name}</option>`;
+    formHTML += `<option value="${subVal}">${s.name}</option>`;
   });
   
-  // 3. Update HTML and silently restore previous values
   if (filterSelect) {
     filterSelect.innerHTML = filterHTML;
     filterSelect.value = currentFilter;
@@ -461,9 +458,7 @@ onSnapshot(collection(db, "subjects"), (snapshot) => {
     if (currentEdit) editSelect.value = currentEdit;
   }
 
-  // 4. Force a final board render to override the browser's rogue change event
   renderActiveTasks();
-
 }, (error) => console.error("Subject Firestore Error: ", error));
 
 let isInitialLoad = true;
@@ -492,7 +487,7 @@ function switchAdminStep(showForm) {
 document.getElementById("btnAdminAccess")?.addEventListener("click", () => adminModal?.classList.add("active"));
 document.getElementById("btnCloseAdmin")?.addEventListener("click", () => {
   adminModal?.classList.remove("active");
-  document.getElementById("adminSubTaskList").innerHTML = ""; // clear inputs
+  document.getElementById("adminSubTaskList").innerHTML = ""; 
 });
 document.getElementById("btnLogoutOfficer")?.addEventListener("click", async () => { await signOut(auth); alert("Officer session closed."); });
 
@@ -517,7 +512,6 @@ document.getElementById("btnVerifyPasscode")?.addEventListener("click", async (e
   } catch (error) { if (passcodeError) { passcodeError.textContent = "Access denied."; passcodeError.style.display = "block"; } }
 });
 
-// UPDATE 8.7: Dynamic Sub-Task Field Generator
 function createSubTaskInput(value = "") {
   const div = document.createElement("div");
   div.className = "sub-task-input-group";
@@ -529,33 +523,40 @@ function createSubTaskInput(value = "") {
   div.appendChild(input); div.appendChild(btn);
   return div;
 }
+document.getElementById("btnAddAdminSubTask")?.addEventListener("click", () => document.getElementById("adminSubTaskList")?.appendChild(createSubTaskInput()));
+document.getElementById("btnAddEditSubTask")?.addEventListener("click", () => document.getElementById("editSubTaskList")?.appendChild(createSubTaskInput()));
 
-document.getElementById("btnAddAdminSubTask")?.addEventListener("click", () => {
-  document.getElementById("adminSubTaskList")?.appendChild(createSubTaskInput());
-});
-document.getElementById("btnAddEditSubTask")?.addEventListener("click", () => {
-  document.getElementById("editSubTaskList")?.appendChild(createSubTaskInput());
+// UPDATE 8.8: Color Palette Selection Logic
+let selectedSubjectColor = "#2563eb"; // Default to blue
+document.querySelectorAll(".color-swatch").forEach(swatch => {
+  swatch.addEventListener("click", (e) => {
+    document.querySelectorAll(".color-swatch").forEach(s => s.classList.remove("selected"));
+    e.target.classList.add("selected");
+    selectedSubjectColor = e.target.getAttribute("data-color");
+  });
 });
 
-// Add New Subject to Database
 document.getElementById("btnAddSubject")?.addEventListener("click", async (e) => {
-  e.preventDefault(); // Safety lock against form submission
+  e.preventDefault(); 
   const input = document.getElementById("newSubjectInput");
   const val = input.value.trim().toUpperCase();
   
   if (!val) return alert("Please enter a subject code.");
   
   try {
-    // Add the new subject to a dedicated "subjects" collection in Firestore
-    await addDoc(collection(db, "subjects"), { name: val, createdAt: new Date().toISOString() });
+    // Save both name AND selected color to Firestore
+    await addDoc(collection(db, "subjects"), { 
+      name: val, 
+      color: selectedSubjectColor,
+      createdAt: new Date().toISOString() 
+    });
     input.value = "";
-    alert(`Success! [${val}] is now available for all students.`);
+    alert(`Success! [${val}] is now available in your selected theme color.`);
   } catch (err) { 
     alert("Error adding subject: " + err.message); 
   }
 });
 
-// Admin Submit 
 document.getElementById("adminTaskForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
   const subTaskInputs = document.querySelectorAll("#adminSubTaskList .sub-task-val");
@@ -566,7 +567,7 @@ document.getElementById("adminTaskForm")?.addEventListener("submit", async (e) =
     subject: document.getElementById("adminTaskSubject")?.value || "",
     dueDate: document.getElementById("adminTaskDueDate")?.value || "",
     body: document.getElementById("adminTaskBody")?.value || "",
-    subTasks: subTasks, // Saves array to Firestore
+    subTasks: subTasks,
     createdAt: new Date().toISOString()
   };
   try {
@@ -578,7 +579,6 @@ document.getElementById("adminTaskForm")?.addEventListener("submit", async (e) =
   } catch (err) { alert("Failed to publish: " + err.message); }
 });
 
-// Edit Task Handlers
 function openEditModal(taskId, data) {
   if (document.getElementById("editTaskId")) document.getElementById("editTaskId").value = taskId;
   if (document.getElementById("editTaskTitle")) document.getElementById("editTaskTitle").value = data.title || "";
@@ -586,7 +586,6 @@ function openEditModal(taskId, data) {
   if (document.getElementById("editTaskDueDate")) document.getElementById("editTaskDueDate").value = data.dueDate || "";
   if (document.getElementById("editTaskBody")) document.getElementById("editTaskBody").value = data.body || "";
   
-  // Load existing sub-tasks into edit form
   const container = document.getElementById("editSubTaskList");
   if (container) {
     container.innerHTML = "";
@@ -617,14 +616,12 @@ document.getElementById("editTaskForm")?.addEventListener("submit", async (e) =>
   } catch (err) { alert("Failed to update: " + err.message); }
 });
 
-/* Delete Task Handler */
 async function deleteTask(taskId) {
   if (!confirm("Are you sure you want to permanently delete this task for all students?")) return;
   try { await deleteDoc(doc(db, "tasks", taskId)); alert("Task permanently deleted."); } 
   catch (err) { alert("Error deleting task: " + err.message); }
 }
 
-/* Expand Modal Controls */
 const btnCloseExpand = document.getElementById("btnCloseExpand");
 if (btnCloseExpand) btnCloseExpand.addEventListener("click", () => expandModal?.classList.remove("active"));
 expandModal?.addEventListener("click", (e) => { if (e.target === expandModal) expandModal.classList.remove("active"); });

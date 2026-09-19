@@ -421,30 +421,49 @@ document.getElementById("btnNotifPermission")?.addEventListener("click", async (
 /* ==========================================
    7. FIRESTORE REAL-TIME LISTENER
    ========================================== */
+
+// UPDATE 8.8: DYNAMIC SUBJECT ENGINE (Decoupled to prevent board flashing)
 onSnapshot(collection(db, "subjects"), (snapshot) => {
   const filterSelect = document.getElementById("subjectFilterSelect");
   const adminSelect = document.getElementById("adminTaskSubject");
   const editSelect = document.getElementById("editTaskSubject");
   
-  // Extract and sort subjects alphabetically
-  const subjects = snapshot.docs.map(doc => doc.data().name).sort();
+  // 1. Save the currently selected options before rewriting the HTML
+  const currentFilter = filterSelect ? filterSelect.value : "all";
+  const currentAdmin = adminSelect ? adminSelect.value : "";
+  const currentEdit = editSelect ? editSelect.value : "";
   
-  // Build the HTML strings
+  // 2. Extract and sort subjects (safely ignoring any empty database entries)
+  const subjects = snapshot.docs
+    .map(doc => doc.data().name || "")
+    .filter(name => name.trim() !== "")
+    .sort();
+  
   let filterHTML = '<option value="all">📚 All Subjects</option>';
   let formHTML = '';
   
   subjects.forEach(sub => {
-    filterHTML += `<option value="${sub.toLowerCase()}">${sub}</option>`;
-    formHTML += `<option value="${sub.toLowerCase()}">${sub}</option>`;
+    const subVal = sub.toLowerCase();
+    filterHTML += `<option value="${subVal}">${sub}</option>`;
+    formHTML += `<option value="${subVal}">${sub}</option>`;
   });
   
-  // Inject into DOM
-  if (filterSelect) filterSelect.innerHTML = filterHTML;
-  if (adminSelect) adminSelect.innerHTML = formHTML;
-  if (editSelect) editSelect.innerHTML = formHTML;
-  
-  renderActiveTasks(); // Re-render the board in case the active filter changed
+  // 3. Inject new HTML and restore the previous selections
+  if (filterSelect) {
+    filterSelect.innerHTML = filterHTML;
+    filterSelect.value = currentFilter;
+    if (!filterSelect.value) filterSelect.value = "all"; // Fallback
+  }
+  if (adminSelect) {
+    adminSelect.innerHTML = formHTML;
+    if (currentAdmin) adminSelect.value = currentAdmin;
+  }
+  if (editSelect) {
+    editSelect.innerHTML = formHTML;
+    if (currentEdit) editSelect.value = currentEdit;
+  }
 }, (error) => console.error("Subject Firestore Error: ", error));
+
 let isInitialLoad = true;
 onSnapshot(collection(db, "tasks"), (snapshot) => {
   if (!taskGrid) return;

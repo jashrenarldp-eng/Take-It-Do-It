@@ -516,6 +516,23 @@ document.getElementById("btnAddEditSubTask")?.addEventListener("click", () => {
   document.getElementById("editSubTaskList")?.appendChild(createSubTaskInput());
 });
 
+// Add New Subject to Database
+document.getElementById("btnAddSubject")?.addEventListener("click", async () => {
+  const input = document.getElementById("newSubjectInput");
+  const val = input.value.trim().toUpperCase();
+  
+  if (!val) return alert("Please enter a subject code.");
+  
+  try {
+    // Add the new subject to a dedicated "subjects" collection in Firestore
+    await addDoc(collection(db, "subjects"), { name: val, createdAt: new Date().toISOString() });
+    input.value = "";
+    alert(`Success! [${val}] is now available for all students.`);
+  } catch (err) { 
+    alert("Error adding subject: " + err.message); 
+  }
+});
+
 // Admin Submit 
 document.getElementById("adminTaskForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();

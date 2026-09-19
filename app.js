@@ -315,7 +315,6 @@ function renderTaskCard(id, data) {
   card.querySelector(".btn-edit-icon")?.addEventListener("click", (e) => { e.stopPropagation(); openEditModal(id, data); });
   card.querySelector(".btn-delete-icon")?.addEventListener("click", (e) => { e.stopPropagation(); deleteTask(id); });
   
-  // === THIS IS THE UPDATED STEP 3 SECTION ===
   card.querySelector(".btn-expand-icon")?.addEventListener("click", (e) => {
     e.stopPropagation();
     document.getElementById("expBadge").textContent = (data.subject || 'GENERAL').toUpperCase();
@@ -349,7 +348,6 @@ function renderTaskCard(id, data) {
     
     expandModal?.classList.add("active");
   });
-  // === END UPDATED STEP 3 SECTION ===
 
   card.addEventListener("click", (e) => {
     if (e.target.tagName === "A" || e.target.tagName === "BUTTON" || e.target.classList.contains("checkbox") || e.target.classList.contains("subtask-checkbox")) return;
@@ -422,18 +420,18 @@ document.getElementById("btnNotifPermission")?.addEventListener("click", async (
    7. FIRESTORE REAL-TIME LISTENER
    ========================================== */
 
-// UPDATE 8.8: DYNAMIC SUBJECT ENGINE (Decoupled to prevent board flashing)
+// UPDATE 8.8: DYNAMIC SUBJECT ENGINE
 onSnapshot(collection(db, "subjects"), (snapshot) => {
   const filterSelect = document.getElementById("subjectFilterSelect");
   const adminSelect = document.getElementById("adminTaskSubject");
   const editSelect = document.getElementById("editTaskSubject");
   
-  // 1. Save the currently selected options before rewriting the HTML
+  // 1. Save the currently selected options safely
   const currentFilter = filterSelect ? filterSelect.value : "all";
   const currentAdmin = adminSelect ? adminSelect.value : "";
   const currentEdit = editSelect ? editSelect.value : "";
   
-  // 2. Extract and sort subjects (safely ignoring any empty database entries)
+  // 2. Extract and sort unique subjects safely
   const subjects = snapshot.docs
     .map(doc => doc.data().name || "")
     .filter(name => name.trim() !== "")
@@ -448,11 +446,11 @@ onSnapshot(collection(db, "subjects"), (snapshot) => {
     formHTML += `<option value="${subVal}">${sub}</option>`;
   });
   
-  // 3. Inject new HTML and restore the previous selections
+  // 3. Update HTML and silently restore previous values
   if (filterSelect) {
     filterSelect.innerHTML = filterHTML;
     filterSelect.value = currentFilter;
-    if (!filterSelect.value) filterSelect.value = "all"; // Fallback
+    if (!filterSelect.value) filterSelect.value = "all";
   }
   if (adminSelect) {
     adminSelect.innerHTML = formHTML;
@@ -462,6 +460,10 @@ onSnapshot(collection(db, "subjects"), (snapshot) => {
     editSelect.innerHTML = formHTML;
     if (currentEdit) editSelect.value = currentEdit;
   }
+
+  // 4. Force a final board render to override the browser's rogue change event
+  renderActiveTasks();
+
 }, (error) => console.error("Subject Firestore Error: ", error));
 
 let isInitialLoad = true;
@@ -536,7 +538,8 @@ document.getElementById("btnAddEditSubTask")?.addEventListener("click", () => {
 });
 
 // Add New Subject to Database
-document.getElementById("btnAddSubject")?.addEventListener("click", async () => {
+document.getElementById("btnAddSubject")?.addEventListener("click", async (e) => {
+  e.preventDefault(); // Safety lock against form submission
   const input = document.getElementById("newSubjectInput");
   const val = input.value.trim().toUpperCase();
   
